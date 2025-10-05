@@ -5,7 +5,6 @@ FTC Metrics is a website that provides important analytical data to teams.
 ## Roadmap
 
 ### General
-
 - [ ] User acccount login and registration
   - [ ] Email/Username and Password
   - [ ] Google SSO
@@ -19,9 +18,7 @@ FTC Metrics is a website that provides important analytical data to teams.
     - [ ] Images and videos
 
 ### Frontend
-
 - [ ] Implement user sign up and log in
-- [ ] 
 
 ### Backend
 - [ ] User acccount login and management
