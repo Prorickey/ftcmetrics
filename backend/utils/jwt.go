@@ -13,11 +13,11 @@ const refreshTokenLifespan = time.Hour * 24 * 7
 const accessTokenLifespan = time.Minute * 5
 
 type TokenInfo struct {
-	UserId string;
-	TokenId string;
-	IssuedAt time.Time;
-	ExpiresAt time.Time;
-	TokenString string;
+	UserId      string
+	TokenId     string
+	IssuedAt    time.Time
+	ExpiresAt   time.Time
+	TokenString string
 }
 
 func CreateRefreshToken(userId string) (TokenInfo, error) {
@@ -42,40 +42,40 @@ func createToken(userId string, lifespan time.Duration, signingKey string) (Toke
 	expiresAt := time.Now().Add(lifespan)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId": userId,
+		"userId":  userId,
 		"tokenId": tokenId.String(),
-		"iat": issuedAt.UnixMilli(),
-		"eat": expiresAt.UnixMilli(),
+		"iat":     issuedAt.UnixMilli(),
+		"exp":     expiresAt.UnixMilli(),
 	})
 
-	tokenString, err := token.SignedString(signingKey)
+	tokenString, err := token.SignedString([]byte(signingKey))
 	if err != nil {
-		return TokenInfo{}, fmt.Errorf("signing refresh token: %v", err)
+		return TokenInfo{}, fmt.Errorf("signing token: %v", err)
 	}
 
 	return TokenInfo{
-		UserId: userId,
-		TokenId: tokenId.String(),
-		IssuedAt: issuedAt,
-		ExpiresAt: expiresAt,
+		UserId:      userId,
+		TokenId:     tokenId.String(),
+		IssuedAt:    issuedAt,
+		ExpiresAt:   expiresAt,
 		TokenString: tokenString,
 	}, nil
 }
 
 func validateToken(tokenString string, signingKey string) (TokenInfo, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
-		return signingKey, nil
+		return []byte(signingKey), nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
-		return TokenInfo{}, fmt.Errorf("parsing refresh token: %v", err)
+		return TokenInfo{}, fmt.Errorf("parsing token: %v", err)
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return TokenInfo{
-			UserId: claims["userId"].(string),
-			TokenId: claims["tokenId"].(string),
-			IssuedAt: time.UnixMilli(int64(claims["iat"].(float64))),
-			ExpiresAt: time.UnixMilli(int64(claims["eat"].(float64))),
+			UserId:      claims["userId"].(string),
+			TokenId:     claims["tokenId"].(string),
+			IssuedAt:    time.UnixMilli(int64(claims["iat"].(float64))),
+			ExpiresAt:   time.UnixMilli(int64(claims["exp"].(float64))),
 			TokenString: tokenString,
 		}, nil
 	} else {

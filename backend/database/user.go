@@ -16,8 +16,8 @@ func CreateUser(username string, email string, digest string) (types.User, error
 	defer tx.Rollback()
 
 	var results struct {
-		ID string `db:"id"`
-		Username string `db:"username"`
+		ID        string    `db:"id"`
+		Username  string    `db:"username"`
 		CreatedAt time.Time `db:"created_at"`
 	}
 
@@ -40,9 +40,9 @@ func CreateUser(username string, email string, digest string) (types.User, error
 
 	if results.Username == username {
 		return types.User{
-			ID: results.ID,
-			Username: username,
-			Email: email,
+			ID:        results.ID,
+			Username:  username,
+			Email:     email,
 			CreatedAt: results.CreatedAt,
 		}, nil
 	} else {
@@ -50,4 +50,28 @@ func CreateUser(username string, email string, digest string) (types.User, error
 			Username: "exists",
 		}, fmt.Errorf("username or email already taken")
 	}
+}
+
+type UserWithDigest struct {
+	ID        string    `db:"id"`
+	Username  string    `db:"username"`
+	Email     string    `db:"email"`
+	Digest    string    `db:"digest"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
+func GetUserByUsernameOrEmail(usernameOrEmail string) (UserWithDigest, error) {
+	var user UserWithDigest
+
+	err := glob_db.Get(&user, `
+		SELECT id, username, email, digest, created_at
+		FROM users
+		WHERE username = $1 OR email = $1
+	`, usernameOrEmail)
+
+	if err != nil {
+		return UserWithDigest{}, fmt.Errorf("querying user: %v", err)
+	}
+
+	return user, nil
 }

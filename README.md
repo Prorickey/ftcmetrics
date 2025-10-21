@@ -22,8 +22,8 @@ FTC Metrics is a website that provides important analytical data to teams.
 
 ### Backend
 - [ ] User acccount login and management
-  - [ ] Registration
-  - [ ] Log in
-  - [ ] Session management
+  - [x] Registration
+  - [x] Log in
+  - [x] Session management
   - [ ] Update routes
   - [ ] SSO handlers and integrations
