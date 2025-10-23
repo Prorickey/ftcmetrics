@@ -4,8 +4,7 @@ import (
 	"log"
 
 	"github.com/Prorickey/ftcmetrics/database"
-	"github.com/Prorickey/ftcmetrics/routes"
-	"github.com/gin-gonic/gin"
+	"github.com/Prorickey/ftcmetrics/server"
 )
 
 func main() {
@@ -14,11 +13,7 @@ func main() {
 		log.Fatalf("database connect: %v", err)
 	}
 
-	router := gin.New()
-	router.Use(gin.Logger())
-	router.Use(gin.Recovery())
-
-	routes.RegisterAuthRoutes(router)
+	router := server.SetupRouter()
 
 	router.Run("0.0.0.0:8080")
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/Prorickey/ftcmetrics/utils"
 	"github.com/alexedwards/argon2id"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 )
 
 func RegisterAuthRoutes(engine *gin.Engine) {
@@ -20,10 +21,10 @@ func RegisterAuthRoutes(engine *gin.Engine) {
 	}
 }
 
-type registerUserBody struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+type RegisterUserBody struct {
+	Username string `json:"username" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type tokenResponse struct {
@@ -39,11 +40,18 @@ type loginUserBody struct {
 
 // POST /auth/register
 func registerUser(ctx *gin.Context) {
-	var body registerUserBody
+	var body RegisterUserBody
 	err := ctx.ShouldBindBodyWithJSON(&body)
 	if err != nil {
 		log.Printf("error unmarshaling json: %v", err)
 		ctx.JSON(400, gin.H{"error": "malformed body"})
+		return
+	}
+
+	v := validator.New()
+	if err := v.Struct(body); err != nil {
+		log.Printf("error validating body: %v", err)
+		ctx.JSON(412, gin.H{"error": "body must have a name, email, and password"})
 		return
 	}
 
