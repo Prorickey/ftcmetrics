@@ -9,13 +9,14 @@ interface CreateAccountBody {
     displayName?: string;
     password?: string;
     email: string;
+    googleEmail?: string; // Original Google email
     identity?: 'google' | 'credentials';
 }
 
 export async function POST(request: NextRequest) {
     try {
         const body: CreateAccountBody = await request.json();
-        const { username, displayName, password, email, identity } = body;
+        const { username, displayName, password, email, googleEmail, identity } = body;
 
         // Get token from cookies (if Google identity)
         const token = request.cookies.get('oauth_token')?.value;
@@ -51,10 +52,11 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            // Verify email matches between token and request
-            if (decodedToken.email.toLowerCase() !== email.toLowerCase()) {
+            // Verify the Google email from token matches the googleEmail parameter
+            // This ensures the token wasn't tampered with
+            if (decodedToken.email.toLowerCase() !== googleEmail?.toLowerCase()) {
                 return NextResponse.json(
-                    { error: 'Email mismatch' },
+                    { error: 'Google email mismatch - token invalid' },
                     { status: 400 }
                 );
             }
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
         let digest: string | null = null;
         if (password) digest = await argon2.hash(password);
 
-        // Create user account
+        // Create user account with the account email (not Google email)
         const user = await prisma.user.create({
             data: {
                 username,
@@ -116,6 +118,7 @@ export async function POST(request: NextRequest) {
                 await prisma.googleIdentity.create({
                     data: {
                         userId: user.id,
+                        googleEmail: googleEmail || decodedToken.email,
                         idToken: decodedToken.tokens.id_token,
                         accessToken: decodedToken.tokens.access_token,
                         refreshToken: decodedToken.tokens.refresh_token || '',

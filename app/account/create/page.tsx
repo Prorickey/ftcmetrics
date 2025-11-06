@@ -48,7 +48,8 @@ export default function CreateAccount() {
                     username,
                     displayName: displayName || undefined,
                     password: password || undefined,
-                    email: email || userEmail,
+                    email: userEmail || email, // Use account email, fallback to Google email
+                    googleEmail: email, // Store the original Google email
                     identity: identity || 'credentials',
                 }),
             });
@@ -71,7 +72,6 @@ export default function CreateAccount() {
     };
 
     const isGoogleSignup = identity === 'google';
-    const emailRequired = isGoogleSignup;
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -82,7 +82,7 @@ export default function CreateAccount() {
                     </h2>
                     {isGoogleSignup && (
                         <p className="mt-2 text-center text-sm text-gray-600">
-                            Signing up with Google: {email}
+                            Google account: {email}
                         </p>
                     )}
                 </div>
@@ -94,41 +94,45 @@ export default function CreateAccount() {
                         </div>
                     )}
 
-                    {/* Email Field - Locked for Google Identity, Editable for credentials */}
-                    {emailRequired && (
+                    {/* Google Email (Read-only, informational) */}
+                    {isGoogleSignup && (
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email
+                            <label htmlFor="googleEmail" className="block text-sm font-medium text-gray-700">
+                                Google Email
                             </label>
                             <input
                                 type="email"
-                                id="email"
+                                id="googleEmail"
                                 value={email || ''}
                                 disabled
                                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-500 cursor-not-allowed"
                             />
                             <p className="mt-1 text-sm text-gray-500">
-                                Email is locked when signing up with Google
+                                Your Google account email (cannot be changed)
                             </p>
                         </div>
                     )}
 
-                    {!emailRequired && (
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email *
-                            </label>
-                            <input
-                                type="email"
-                                id="email"
-                                value={userEmail}
-                                onChange={(e) => setUserEmail(e.target.value)}
-                                required
-                                placeholder="your@email.com"
-                                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                            />
-                        </div>
-                    )}
+                    {/* Account Email - Editable for all users */}
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                            Account Email {isGoogleSignup && '(optional, can differ from Google email)'}*
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={userEmail}
+                            onChange={(e) => setUserEmail(e.target.value)}
+                            required={!isGoogleSignup}
+                            placeholder={isGoogleSignup ? "Leave blank to use Google email" : "your@email.com"}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                        />
+                        {isGoogleSignup && (
+                            <p className="mt-1 text-sm text-gray-500">
+                                You can use a different email for your account, or leave this blank to use your Google email
+                            </p>
+                        )}
+                    </div>
 
                     {/* Username Field */}
                     <div>
@@ -189,7 +193,7 @@ export default function CreateAccount() {
                                 id="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Add a password for extra security"
+                                placeholder="Add a password for password sign in"
                                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
                             />
                         </div>

@@ -26,11 +26,20 @@ interface Profile {
     }>;
 }
 
+interface Identities {
+    email: string;
+    hasPassword: boolean;
+    hasGoogle: boolean;
+    googleEmail?: string;
+}
+
 export default function ProfilePage() {
     const router = useRouter();
     const [profile, setProfile] = useState<Profile | null>(null);
+    const [identities, setIdentities] = useState<Identities | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [removingIdentity, setRemovingIdentity] = useState<string | null>(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
@@ -48,7 +57,23 @@ export default function ProfilePage() {
 
     useEffect(() => {
         fetchProfile();
+        fetchIdentities();
     }, []);
+
+    const fetchIdentities = async () => {
+        try {
+            const response = await fetch('/api/user/identities', {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setIdentities(data.identities);
+            }
+        } catch (err) {
+            console.error('Error fetching identities:', err);
+        }
+    };
 
     const fetchProfile = async () => {
         try {
@@ -150,6 +175,37 @@ export default function ProfilePage() {
         }
     };
 
+    const handleRemoveIdentity = async (identityType: 'google' | 'password') => {
+        if (!confirm(`Are you sure you want to remove your ${identityType} identity?`)) {
+            return;
+        }
+
+        setRemovingIdentity(identityType);
+        setError('');
+        setSuccess('');
+
+        try {
+            const response = await fetch(`/api/user/identities?type=${identityType}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to remove identity');
+            }
+
+            setSuccess(`${identityType} identity removed successfully`);
+            await fetchIdentities();
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            console.error('Error removing identity:', err);
+            setError(err instanceof Error ? err.message : 'Failed to remove identity');
+        } finally {
+            setRemovingIdentity(null);
+        }
+    };
+
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', {
@@ -225,7 +281,55 @@ export default function ProfilePage() {
                             </div>
                         </section>
 
-                        {/* Profile Information */}
+                        {/* Connected Identities */}
+                        {identities && (
+                            <section className="bg-white rounded-lg shadow p-6">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Connected Identities</h2>
+                                <div className="space-y-4">
+                                    {/* Email/Password */}
+                                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                        <div>
+                                            <p className="font-medium text-gray-900">Email & Password</p>
+                                            <p className="text-sm text-gray-600">{identities.email}</p>
+                                            {!identities.hasPassword && (
+                                                <p className="text-sm text-amber-600 mt-1">No password set</p>
+                                            )}
+                                        </div>
+                                        {identities.hasGoogle && identities.hasPassword && (
+                                            <button
+                                                onClick={() => handleRemoveIdentity('password')}
+                                                disabled={removingIdentity === 'password'}
+                                                className="px-4 py-2 text-red-600 hover:text-red-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {removingIdentity === 'password' ? 'Removing...' : 'Remove'}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Google */}
+                                    {identities.hasGoogle && (
+                                        <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                            <div>
+                                                <p className="font-medium text-gray-900">Google Account</p>
+                                                <p className="text-sm text-gray-600">{identities.googleEmail}</p>
+                                            </div>
+                                            {identities.hasPassword && (
+                                                <button
+                                                    onClick={() => handleRemoveIdentity('google')}
+                                                    disabled={removingIdentity === 'google'}
+                                                    className="px-4 py-2 text-red-600 hover:text-red-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {removingIdentity === 'google' ? 'Removing...' : 'Remove'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-4">
+                                    You must have at least one authentication method. You cannot remove your only sign-in method.
+                                </p>
+                            </section>
+                        )}
                         <section className="bg-white rounded-lg shadow p-6">
                             <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Information</h2>
                             <div className="space-y-4">
