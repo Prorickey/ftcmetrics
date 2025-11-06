@@ -20,11 +20,53 @@ model User {
   username    String  @unique
   displayName String?
 
+  // Profile
+  bio          String?
+  profileImage String?
+  pronouns     String?
+
+  // External Links
+  githubUrl   String?
+  youtubeUrl  String?
+  discordUrl  String?
+
   // Authentication
   digest String? // Credentials Auth
   google GoogleIdentity?
   sessions Session[]
+  
+  // Teams
+  teamMembers TeamMember[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model TeamMember {
+  id String @id @default(cuid())
+  
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String
+  
+  role String? // e.g., "Drive Team", "Programmer", "Builder", etc.
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
+}
+
+model Team {
+  id   String @id @default(cuid())
+  name String
+  number String @unique
+  
+  members TeamMember[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }

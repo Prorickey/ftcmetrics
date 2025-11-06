@@ -1,8 +1,18 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Minus, ChevronRight, Download, Filter } from 'lucide-react';
+import Link from 'next/link';
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  displayName?: string;
+}
 
 const TeamsInsights = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedMetric, setSelectedMetric] = useState('epa');
   const [selectedYear, setSelectedYear] = useState('2025');
   
@@ -33,19 +43,52 @@ const TeamsInsights = () => {
     { rank: 15, team: '17890', name: 'Mega Mechanics', epa: 111.1, change: -1.1, trend: 'down', wins: 26, losses: 18, region: 'Colorado', country: 'USA' },
   ];
 
-  const getTrendIcon = (trend) => {
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      setUser(null);
+      window.location.reload();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  const getTrendIcon = (trend: string) => {
     if (trend === 'up') return <TrendingUp className="w-4 h-4 text-emerald-600" />;
     if (trend === 'down') return <TrendingDown className="w-4 h-4 text-rose-600" />;
     return <Minus className="w-4 h-4 text-slate-400" />;
   };
 
-  const getTrendColor = (trend) => {
+  const getTrendColor = (trend: string) => {
     if (trend === 'up') return 'text-emerald-600';
     if (trend === 'down') return 'text-rose-600';
     return 'text-slate-600';
   };
 
-  const getRankBadgeColor = (rank) => {
+  const getRankBadgeColor = (rank: number) => {
     if (rank === 1) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
     if (rank === 2) return 'bg-slate-100 text-slate-700 border-slate-300';
     if (rank === 3) return 'bg-orange-100 text-orange-700 border-orange-300';
@@ -54,8 +97,57 @@ const TeamsInsights = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-10">
+      {/* Navigation Header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
+          <Link href="/" className="text-2xl font-bold text-slate-900">
+            FTC Metrics
+          </Link>
+          <div className="flex items-center gap-4">
+            {!isLoading && (
+              <>
+                {user ? (
+                  <>
+                    <span className="text-slate-700 font-medium text-sm">
+                      Hi, {user.displayName || user.username}
+                    </span>
+                    <Link
+                      href="/profile"
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-lg font-medium text-sm transition-colors"
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/auth"
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-lg font-medium text-sm transition-colors"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/auth"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors"
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Page Header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-[1600px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
