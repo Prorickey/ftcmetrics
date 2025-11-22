@@ -9,6 +9,7 @@ import {
   Filter,
 } from 'lucide-react';
 import Link from 'next/link';
+import { hello } from 'ftcmetrics-api'
 
 interface User {
   id: string;
@@ -272,6 +273,8 @@ const TeamsInsights = () => {
     if (rank === 3) return 'bg-orange-100 text-orange-700 border-orange-300';
     return 'bg-blue-100 text-blue-700 border-blue-300';
   };
+
+  console.log(hello("test"))
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50'>

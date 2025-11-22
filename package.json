@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
+    "api:install": "npm install ./ftcmetrics-api",
     "build": "next build --turbopack",
     "docker:build": "node build.mjs",
     "docker:push": "node build.mjs --push",
@@ -21,6 +22,7 @@
     "@prisma/client": "^7.0.0",
     "argon2": "^0.44.0",
     "dotenv": "^17.2.3",
+    "ftcmetrics-api": "file:ftcmetrics-api",
     "googleapis": "^166.0.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.554.0",

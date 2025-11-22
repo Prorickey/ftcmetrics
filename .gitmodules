@@ -1,0 +1,3 @@
+[submodule "ftcmetrics-api"]
+	path = ftcmetrics-api
+	url = https://github.com/Prorickey/ftcmetrics-api.git
