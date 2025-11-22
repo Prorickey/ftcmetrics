@@ -1,0 +1,28 @@
+{
+  "name": "fetcher",
+  "version": "1.0.0",
+  "description": "The microservice that keeps the ftcmetrics database up to date with ftc matches",
+  "license": "MIT",
+  "author": "Prorickey (Trevor Bedson)",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "api:install": "npm install ../ftcmetrics-api",
+    "build": "tsc",
+    "dev": "tsc && node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "prisma": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "dotenv": "^17.2.3",
+    "ftcmetrics-api": "file:../ftcmetrics-api",
+    "pg": "^8.16.3"
+  }
+}
