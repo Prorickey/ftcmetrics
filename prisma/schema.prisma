@@ -88,9 +88,126 @@ model Team {
   homeRegion   String?
   
   members TeamMember[]
+  matches MatchTeam[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Event {
+  id String @id @default(cuid())
+  
+  // Event Identifiers
+  eventId      String  @unique
+  code         String  @unique
+  divisionCode String?
+  
+  // Event Info
+  name         String?
+  remote       Boolean @default(false)
+  hybrid       Boolean @default(false)
+  fieldCount   Int?
+  published    Boolean @default(false)
+  type         String?
+  typeName     String?
+  
+  // Location
+  regionCode   String?
+  leagueCode   String?
+  districtCode String?
+  venue        String?
+  address      String?
+  city         String?
+  stateprov    String?
+  country      String?
+  
+  // Additional Info
+  website       String?
+  liveStreamUrl String?
+  timezone      String?
+  
+  // Webcasts
+  webcasts Webcast[]
+  
+  // Matches
+  matches Match[]
+  
+  // Dates
+  dateStart DateTime?
+  dateEnd   DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Match {
+  id String @id @default(cuid())
+  
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  
+  // Match Info
+  matchNumber     Int
+  description     String?
+  tournamentLevel String?
+  series          Int
+  
+  // Scores
+  scoreRedFinal   Int
+  scoreRedFoul    Int
+  scoreRedAuto    Int
+  scoreBlueFinal  Int
+  scoreBlueFoul   Int
+  scoreBlueAuto   Int
+  
+  // Timestamps
+  actualStartTime DateTime?
+  postResultTime  DateTime?
+  modifiedOn      DateTime?
+  
+  // Teams in match
+  teams MatchTeam[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  
+  @@index([eventId])
+  @@unique([eventId, matchNumber, tournamentLevel, series])
+}
+
+model MatchTeam {
+  id String @id @default(cuid())
+  
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchId String
+  
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String
+  
+  // Team-specific match info
+  station String?
+  dq      Boolean @default(false)
+  onField Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([matchId])
+  @@index([teamId])
+  @@unique([matchId, teamId])
+}
+
+model Webcast {
+  id String @id @default(cuid())
+  
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  
+  url String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  
+  @@index([eventId])
 }
 
 model GoogleIdentity {
