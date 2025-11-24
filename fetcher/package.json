@@ -8,8 +8,9 @@
   "type": "module",
   "scripts": {
     "api:install": "npm install ../ftcmetrics-api",
-    "build": "tsc",
-    "dev": "tsc && node dist/index.js"
+    "build": "tsc && cp -r ../generated/prisma ./dist/generated",
+    "dev": "tsc && cp -r ../generated/prisma ./dist/generated && node dist/index.js",
+    "db:generate": "prisma generate"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

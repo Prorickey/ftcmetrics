@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -61,8 +61,31 @@ model TeamMember {
 
 model Team {
   id   String @id @default(cuid())
-  name String
-  number String @unique
+  
+  // Basic Info
+  teamNumber        Int     @unique
+  displayTeamNumber String?
+  teamId            Int?
+  teamProfileId     Int?
+  
+  // Names
+  nameFull   String?
+  nameShort  String?
+  schoolName String?
+  
+  // Location
+  city           String?
+  stateProv      String?
+  country        String?
+  displayLocation String?
+  
+  // Additional Info
+  website      String?
+  rookieYear   Int?
+  robotName    String?
+  districtCode String?
+  homeCMP      String?
+  homeRegion   String?
   
   members TeamMember[]
   
