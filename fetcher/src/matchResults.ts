@@ -4,7 +4,7 @@ import { prisma } from "./db.js"
 export async function updateAllMatches(client: Client, season: number) {
     // First, get all events for this season
     const eventData = await client.events(season)
-    const allEvents = eventData.events || []
+    const allEvents = eventData.events?.slice(0, 20) || []
 
     console.log(`Fetching matches for ${allEvents.length} events`)
 
@@ -54,9 +54,9 @@ export async function updateAllMatches(client: Client, season: number) {
 
     console.log(`Found ${existingMatches.length} existing matches in database`)
 
-    // Create a map for quick lookup using eventCode + matchNumber
+    // Create a map for quick lookup using eventCode + matchNumber + tournamentLevel + series
     const existingMatchMap = new Map(
-        existingMatches.map(m => [`${m.event.code}:${m.matchNumber}`, m])
+        existingMatches.map(m => [`${m.event.code}:${m.matchNumber}:${m.tournamentLevel}:${m.series}`, m])
     )
 
     // Separate matches into create and update
@@ -109,7 +109,7 @@ export async function updateAllMatches(client: Client, season: number) {
             continue
         }
 
-        const existingMatch = existingMatchMap.get(`${apiMatch.eventCode}:${apiMatch.matchNumber}`)
+        const existingMatch = existingMatchMap.get(`${apiMatch.eventCode}:${apiMatch.matchNumber}:${apiMatch.tournamentLevel}:${apiMatch.series}`)
 
         if (!existingMatch) {
             // Get team IDs from database
@@ -159,8 +159,8 @@ export async function updateAllMatches(client: Client, season: number) {
             })
         } else {
             // Check if any field has changed
-            const hasChanges = hasMatchChanged(existingMatch, apiMatch)
-            if (hasChanges) {
+            const changeInfo = hasMatchChanged(existingMatch, apiMatch)
+            if (changeInfo.changed) {
                 const teamUpdates = apiMatch.teams || []
 
                 toUpdate.push({
@@ -179,10 +179,6 @@ export async function updateAllMatches(client: Client, season: number) {
                     } as any,
                     teamUpdates: await Promise.all(
                         teamUpdates.map(async (t) => {
-                            const team = await prisma.team.findFirst({
-                                where: { teamNumber: t.teamNumber },
-                                select: { id: true }
-                            })
                             return {
                                 teamNumber: t.teamNumber,
                                 station: t.station || null,
@@ -258,7 +254,7 @@ export async function updateAllMatches(client: Client, season: number) {
 }
 
 
-function hasMatchChanged(existing: any, apiMatch: MatchResultModel): boolean {
+function hasMatchChanged(existing: any, apiMatch: MatchResultModel): { changed: boolean; details: Record<string, { old: any; new: any }> } {
     const fieldsToCheck = [
         'matchNumber',
         'description',
@@ -270,18 +266,35 @@ function hasMatchChanged(existing: any, apiMatch: MatchResultModel): boolean {
         'modifiedOn'
     ] as const
 
-    return fieldsToCheck.some(field => {
+    const changes: Record<string, { old: any; new: any }> = {}
+
+    fieldsToCheck.forEach(field => {
         let existingValue = existing[field]
         let apiValue = apiMatch[field as keyof MatchResultModel]
 
         // Convert Date objects to ISO strings for comparison
         if (existingValue instanceof Date) existingValue = existingValue.toISOString()
         if (apiValue instanceof Date) apiValue = apiValue.toISOString()
+        
+        // For string dates (like modifiedOn), normalize them to ISO format
+        if (field === 'modifiedOn' && typeof apiValue === 'string') {
+            apiValue = new Date(apiValue).toISOString()
+        }
 
         // Treat null and undefined as the same
         const existingNormalized = existingValue ?? null
         const apiNormalized = apiValue ?? null
 
-        return existingNormalized !== apiNormalized
+        if (existingNormalized !== apiNormalized) {
+            changes[field] = {
+                old: existingNormalized,
+                new: apiNormalized
+            }
+        }
     })
+
+    return {
+        changed: Object.keys(changes).length > 0,
+        details: changes
+    }
 }
