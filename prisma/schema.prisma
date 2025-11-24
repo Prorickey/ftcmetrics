@@ -151,6 +151,7 @@ model Match {
   description     String?
   tournamentLevel String?
   series          Int
+  field           String?
   
   // Scores
   scoreRedFinal   Int
